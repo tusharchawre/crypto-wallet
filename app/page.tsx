@@ -16,7 +16,6 @@ export default function Home() {
       <p className="pb-7">Cohort 3.0 Project</p>
       <Link href="/wallets">
       <Button variant="outline" className="text-black">Continue</Button>
-
       </Link>
     </div>
 
