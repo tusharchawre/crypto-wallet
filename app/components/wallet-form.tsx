@@ -11,9 +11,13 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import bs58 from "bs58";
+
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { wordsPush } from "./mnemo-dialog";
+import { useState } from "react";
+import { ethers } from "ethers";
 
 const formSchema = z.object({
   WalletName: z.string().min(2),
@@ -30,9 +34,11 @@ export const WalletForm = () => {
   });
 
   const { addWallet } = useWallet(); // Use the context here
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const seed = mnemonicToSeedSync(wordsPush());
+
     
     function configureType() {
       if (values.type === "BTC") return "0'";
@@ -41,20 +47,47 @@ export const WalletForm = () => {
       return ""; // Default case
     }
 
-    const path = `m/44'/${configureType()}/${addWallet.length}'/0'`;
+    if(configureType() == "501'"){
+
+    const path = `m/44'/501'/${currentIndex}'/0'`;
     const derivedSeed = derivePath(path, seed.toString("hex")).key;
     const secret = nacl.sign.keyPair.fromSeed(derivedSeed).secretKey;
-
+    setCurrentIndex(currentIndex + 1);
+    const keyPair = Keypair.fromSecretKey(secret)
     addWallet({
       WalletName: values.WalletName,
       type: values.type,
-      PublicKey: Keypair.fromSecretKey(secret).publicKey.toBase58(),
+      PublicKey: keyPair.publicKey.toBase58(),
+      PrivateKey: bs58.encode(secret)
     });
+
+    }
+
+    else {
+      const path = `m/44'/60'/${currentIndex}'/0'`;
+      const derivedSeed = derivePath(path, seed.toString("hex")).key;
+
+      const privateKey = Buffer.from(derivedSeed).toString("hex");
+      let privateKeyEncoded : string = privateKey;
+
+        const wallet = new ethers.Wallet(privateKey);
+        let publicKeyEncoded : string = wallet.address;
+
+        addWallet({
+          WalletName: values.WalletName,
+          type: values.type,
+          PublicKey: publicKeyEncoded,
+          PrivateKey: privateKeyEncoded
+        });
+
+    }
+
 
 
   }
 
   return (
+    <>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
@@ -99,5 +132,9 @@ export const WalletForm = () => {
         <Button type="submit">Submit</Button>
       </form>
     </Form>
+
+
+
+    </>
   );
 };

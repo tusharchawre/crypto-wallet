@@ -44,12 +44,20 @@ const copyToClipboard = (text: string) => {
 
 export const MnemonicsModal = ({ children }: MnemonicsModalProps) => {
     const [mnemonicsArray, setMnemonicsArray] = useState<string[]>([]);
+    const [isCopied, setIsCopied] = useState(false);
+
 
     const handleOpenDialog = () => {
         const mnemonics = convertMnemonicsToArray(words);
         setMnemonicsArray(mnemonics);
-        copyToClipboard(words);
+        setIsCopied(false)
+
     };
+
+    const handleCopy = () =>{
+        copyToClipboard(words);
+        setIsCopied(true)
+    }
 
     return (
         <>
@@ -68,7 +76,13 @@ export const MnemonicsModal = ({ children }: MnemonicsModalProps) => {
                         ))}
                     </div>
 
-                    <p className='m-10 text-gray-600 text-sm text-center'>Items already copied to clipboard. Save it somewhere private</p>
+                    
+
+                    <Button className='my-8' onClick={handleCopy}>
+                        {
+                            isCopied ? 'Copied' : 'Copied to Clipboard'
+                        }
+                        </Button>
                 
 
                    
